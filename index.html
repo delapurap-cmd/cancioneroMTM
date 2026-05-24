@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cancionero MTM</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Cancionero comunitario: explora miles de canciones con cifrado, busca por canción o artista, y transporta la tonalidad al instante.">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--header-offset:0px;--gold:#C9A84C;--gold-light:#E8C97A;--gold-dark:#8B6914;--black:#0A0A0A;--dark2:#1A1A1A;--white:#F5F0E8;--gray:#888880}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:Lato,system-ui,sans-serif;font-weight:300;min-height:100vh;padding-top:24px}
+main{max-width:1180px;margin:0 auto;padding:30px 16px 80px}
+.page-title{font-family:Cinzel,serif;font-size:clamp(26px,3.5vw,40px);color:var(--gold-light);margin-bottom:6px;letter-spacing:1px}
+.page-sub{color:var(--gray);font-size:13px;margin-bottom:24px;letter-spacing:.5px}
+.page-sub b{color:var(--gold)}
+.search-wrap{display:flex;align-items:stretch;gap:0;background:var(--dark2);border:1px solid rgba(201,168,76,.3);border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s}
+.search-wrap:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,.15)}
+.search-wrap input{flex:1;background:transparent;border:0;outline:0;color:var(--white);font-family:Lato,sans-serif;font-size:16px;padding:14px 18px;min-width:0}
+.search-wrap input::placeholder{color:#666}
+.search-btn{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--black);border:0;padding:0 22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:filter .2s}
+.search-btn:hover{filter:brightness(1.15)}
+.search-btn svg{width:22px;height:22px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;align-items:center}
+.toolbar-label{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-dark);font-weight:700}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:14px;border:1px solid rgba(201,168,76,.3);background:rgba(26,26,26,.7);color:var(--gold-light);font-size:12px;text-decoration:none;cursor:pointer;transition:all .2s;font-family:Lato,sans-serif}
+.chip:hover{border-color:var(--gold);background:rgba(201,168,76,.12)}
+.chip.active{background:var(--gold);color:var(--black);border-color:var(--gold);font-weight:700}
+.section-title{font-family:Cinzel,serif;font-size:18px;color:var(--gold);letter-spacing:1.5px;margin:32px 0 12px;text-transform:uppercase}
+.results,.folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.result-card,.folder-card{background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.015));border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .25s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:4px}
+.result-card:hover,.folder-card:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.result-artist{font-family:Cinzel,serif;font-size:17px;color:var(--white);line-height:1.25}
+.result-song{font-size:12px;color:var(--gold);letter-spacing:.5px}
+.artist-card{background:linear-gradient(160deg,rgba(201,168,76,.07),rgba(255,255,255,.02));border:1px solid rgba(201,168,76,.22);border-radius:10px;padding:18px 18px 16px;cursor:pointer;transition:all .25s;text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:6px;min-height:96px;justify-content:flex-end;position:relative;overflow:hidden}
+.artist-card:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.45);background:linear-gradient(160deg,rgba(201,168,76,.14),rgba(255,255,255,.03))}
+.artist-card-name{font-family:Cinzel,serif;font-size:18px;color:var(--white);line-height:1.2;letter-spacing:.3px}
+.artist-card-count{font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.folder-card-name{font-family:Cinzel,serif;font-size:16px;color:var(--gold-light)}
+.folder-card-count{font-size:11px;color:var(--gray);letter-spacing:1px;text-transform:uppercase}
+.sugg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.sugg-card{position:relative;display:flex;align-items:center;gap:14px;padding:14px 16px 14px 14px;border-radius:10px;border:1px solid rgba(201,168,76,.22);background:linear-gradient(135deg,rgba(201,168,76,.06),rgba(255,255,255,.015));cursor:pointer;text-decoration:none;color:inherit;transition:all .25s;overflow:hidden}
+.sugg-card:before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--gold),var(--gold-dark));opacity:.4;transition:opacity .25s,width .25s}
+.sugg-card:hover{transform:translateX(3px);border-color:var(--gold);background:linear-gradient(135deg,rgba(201,168,76,.14),rgba(255,255,255,.02));box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.sugg-card:hover:before{opacity:1;width:5px}
+.sugg-num{font-family:Cinzel,serif;font-size:22px;color:var(--gold);min-width:30px;text-align:center;opacity:.6;font-weight:700}
+.sugg-card:hover .sugg-num{opacity:1;color:var(--gold-light)}
+.sugg-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sugg-artist{font-family:Cinzel,serif;font-size:15px;color:var(--white);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sugg-song{font-size:11px;color:var(--gold);letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sugg-icon{width:18px;height:18px;color:var(--gold-dark);opacity:.5;flex-shrink:0;transition:all .25s}
+.sugg-card:hover .sugg-icon{color:var(--gold);opacity:1;transform:translateX(2px)}
+.sugg-section-head{display:flex;align-items:center;gap:10px;margin:32px 0 14px}
+.sugg-section-head .section-title{margin:0}
+.sugg-section-head .sep{flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.4),transparent)}
+.empty,.loading{color:var(--gray);font-style:italic;text-align:center;padding:40px 20px}
+.show-more{display:block;margin:18px auto;background:transparent;color:var(--gold);border:1px solid var(--gold);border-radius:20px;padding:8px 22px;cursor:pointer;font-family:Lato,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase}
+.show-more:hover{background:var(--gold);color:var(--black)}
+
+/* Viewer */
+.viewer{display:none;background:var(--dark2);border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:24px;margin-top:8px}
+.viewer.open{display:block}
+.viewer-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:14px;border-bottom:1px solid rgba(201,168,76,.2);padding-bottom:14px;margin-bottom:18px}
+.viewer-title{font-family:Cinzel,serif;font-size:clamp(20px,2.6vw,28px);color:var(--white);line-height:1.2}
+.viewer-artist{font-size:13px;color:var(--gold);letter-spacing:1px;margin-top:4px}
+.transpose{display:flex;align-items:center;gap:8px;background:rgba(10,10,10,.6);border:1px solid rgba(201,168,76,.3);border-radius:30px;padding:4px}
+.transpose button{width:34px;height:34px;border-radius:50%;border:0;background:var(--gold);color:var(--black);font-weight:900;font-size:18px;cursor:pointer;line-height:1;transition:filter .15s}
+.transpose button:hover{filter:brightness(1.15)}
+.transpose .t-value{min-width:54px;text-align:center;font-family:JetBrains Mono,monospace;color:var(--gold-light);font-weight:700;font-size:13px;letter-spacing:.5px}
+.transpose .t-reset{background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,.4);width:auto;padding:0 12px;height:30px;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;border-radius:16px}
+.viewer-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.viewer-close{background:transparent;border:1px solid rgba(201,168,76,.4);color:var(--gold);border-radius:16px;padding:6px 14px;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:700;cursor:pointer;font-family:Lato,sans-serif}
+.viewer-close:hover{background:rgba(201,168,76,.1)}
+.cifrado{font-family:JetBrains Mono,Menlo,monospace;font-size:14px;line-height:1.55;white-space:pre;overflow-x:auto;color:var(--white);padding:6px 2px}
+.cifrado .chord-line{color:var(--gold);font-weight:700}
+.suggestions{margin-top:30px}
+.song-list{list-style:none;padding:0;margin:0;counter-reset:song;display:grid;gap:4px}
+.song-list li{counter-increment:song}
+.song-list-item{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:8px;background:transparent;border:1px solid transparent;text-decoration:none;color:inherit;cursor:pointer;transition:all .2s}
+.song-list-item:before{content:counter(song,decimal-leading-zero);font-family:JetBrains Mono,monospace;font-size:12px;color:var(--gold-dark);font-weight:700;min-width:32px}
+.song-list-item:hover{background:rgba(201,168,76,.08);border-color:rgba(201,168,76,.3);padding-left:18px}
+.song-list-item:hover:before{color:var(--gold)}
+.song-list-title{flex:1;font-family:Cinzel,serif;font-size:15px;color:var(--white)}
+.song-list-arrow{width:18px;height:18px;color:var(--gold);opacity:0;transition:all .2s}
+.song-list-item:hover .song-list-arrow{opacity:1;transform:translateX(3px)}
+
+.app-cta{margin:48px 0 8px;position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:28px;padding:24px 28px;border-radius:18px;border:1px solid rgba(201,168,76,.32);background:radial-gradient(700px 280px at 90% 0%,rgba(201,168,76,.18),transparent 65%),linear-gradient(135deg,#17140f 0%,#0c0c0c 80%);overflow:hidden;text-decoration:none;color:inherit;transition:all .3s}
+.app-cta:hover{border-color:var(--gold);box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.app-cta-shot{width:160px;border-radius:14px;border:2px solid #3a3a3a;background:#000;box-shadow:0 12px 28px rgba(0,0,0,.45);overflow:hidden;line-height:0}
+.app-cta-shot img{width:100%;height:auto;display:block}
+.app-cta-body{display:flex;flex-direction:column;gap:8px;min-width:0}
+.app-cta-eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);font-weight:900}
+.app-cta-title{font-family:Cinzel,serif;font-size:clamp(20px,2.4vw,26px);color:var(--white);line-height:1.2;margin:0}
+.app-cta-desc{color:#cfc8ba;font-size:13px;line-height:1.6;margin:0;max-width:640px}
+.app-cta-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--black);font-weight:900;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;padding:14px 22px;border-radius:8px;white-space:nowrap;transition:filter .2s}
+.app-cta-btn:hover{filter:brightness(1.12)}
+.app-cta-btn svg{width:16px;height:16px}
+@media(max-width:760px){.app-cta{grid-template-columns:1fr;text-align:center;padding:24px 20px;gap:18px}.app-cta-shot{justify-self:center;width:170px}.app-cta-desc{margin:0 auto}}
+@media(max-width:600px){
+  main{padding:20px 12px 60px}
+  .app-cta-btn{width:100%;justify-content:center}
+  .cifrado{font-size:12px;line-height:1.5}
+  .viewer{padding:16px}
+  .viewer-head{flex-direction:column;align-items:stretch}
+  .transpose{align-self:flex-start}
+}
+</style>
+</head>
+<body>
+
+
+<main>
+  <h1 class="page-title" data-i18n-mtm="title">Cancionero</h1>
+
+  <div class="search-wrap" role="search">
+    <input id="q" type="search" autocomplete="off" placeholder="Buscar canción o artista…" aria-label="Buscar" data-i18n-mtm-attr="placeholder|search.placeholder,aria-label|search.aria">
+    <button class="search-btn" id="searchBtn" aria-label="Buscar" data-i18n-mtm-attr="aria-label|search.aria">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    </button>
+  </div>
+
+  <div class="toolbar" id="letterBar" aria-label="Filtrar por letra"></div>
+
+  <div id="viewerHost"></div>
+
+  <section id="resultsSection">
+    <h2 class="section-title" id="resultsTitle"></h2>
+    <div id="results"></div>
+    <button class="show-more" id="showMore" style="display:none" data-i18n-mtm="showMore">Ver más</button>
+  </section>
+
+  <a class="app-cta" href="https://play.google.com/store/apps/details?id=com.morethanmodes.more_than_modes" target="_blank" rel="noopener">
+    <div class="app-cta-shot">
+      <img src="/v2/lyrics_chords_composer.jpg" alt="Lyrics &amp; Chords Composer en la app More Than Modes" loading="lazy">
+    </div>
+    <div class="app-cta-body">
+      <span class="app-cta-eyebrow" data-i18n-mtm="cta.eyebrow">Más con la app</span>
+      <h3 class="app-cta-title" data-i18n-mtm="cta.title">Escucha los acordes en tiempo real</h3>
+      <p class="app-cta-desc" data-i18n-mtm="cta.desc">Prueba More Than Modes en tu móvil: toca cualquier acorde del cifrado y escúchalo al instante. Incluye armonía, escalas y herramientas de práctica integradas, sin anuncios y offline.</p>
+    </div>
+    <span class="app-cta-btn">
+      <svg viewBox="0 0 24 24" fill="#000"><path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.8 9.99l-2.302 2.302-8.634-8.634z"/></svg>
+      <span data-i18n-mtm="cta.btn">Descargar en Google Play</span>
+    </span>
+  </a>
+</main>
+
+<footer style="padding:50px 20px 100px;background:var(--dark2);border-top:1px solid rgba(201,168,76,.15);text-align:center">
+  <div style="margin-bottom:14px"><img src="/logo.png" alt="More Than Modes" style="width:48px;height:48px;opacity:.85"></div>
+  <p style="font-family:Cinzel,serif;font-size:12px;color:var(--gold);letter-spacing:2px;margin-bottom:18px">Creado por músicos para músicos</p>
+  <p style="font-size:10px;color:#333;letter-spacing:1px">© 2026 More Than Modes</p>
+</footer>
+
+<script>
+/* =========================================================================
+ *  Cancionero — buscador, navegador y visor con transposición
+ * ========================================================================= */
+const DATA_BASE = 'cancionero-data';
+const PAGE_SIZE = 60;
+
+/* ---------- i18n ---------- */
+const I18N = {
+  title:        {es:'Cancionero',                   en:'Songbook',                       fr:'Chansonnier',                  it:'Canzoniere',                   pt:'Cancioneiro'},
+  'search.placeholder': {es:'Buscar canción o artista…', en:'Search song or artist…',  fr:'Chercher chanson ou artiste…', it:'Cerca canzone o artista…',     pt:'Buscar canção ou artista…'},
+  'search.aria':{es:'Buscar',                       en:'Search',                         fr:'Chercher',                     it:'Cerca',                        pt:'Buscar'},
+  byLetter:     {es:'Por letra:',                   en:'By letter:',                     fr:'Par lettre :',                 it:'Per lettera:',                 pt:'Por letra:'},
+  all:          {es:'Todas',                        en:'All',                            fr:'Toutes',                       it:'Tutte',                        pt:'Todas'},
+  topArtists:   {es:'Artistas más populares', en:'Most popular artists', fr:'Artistes les plus populaires', it:'Artisti più popolari', pt:'Artistas mais populares'},
+  letterTitle:  {es:'Letra {l} · {n} canciones',    en:'Letter {l} · {n} songs',         fr:'Lettre {l} · {n} chansons',    it:'Lettera {l} · {n} canzoni',    pt:'Letra {l} · {n} canções'},
+  sectionArtists:{es:'Artistas ({n})',              en:'Artists ({n})',                  fr:'Artistes ({n})',               it:'Artisti ({n})',                pt:'Artistas ({n})'},
+  sectionSongs: {es:'Canciones ({n})',              en:'Songs ({n})',                    fr:'Chansons ({n})',               it:'Canzoni ({n})',                pt:'Canções ({n})'},
+  moreOf:       {es:'Más de {name}',                en:'More by {name}',                 fr:'Plus de {name}',               it:'Altro di {name}',              pt:'Mais de {name}'},
+  noResults:    {es:'Sin resultados. Prueba con menos palabras o revisa la ortografía (el buscador tolera faltas).', en:'No results. Try fewer words or check the spelling (the search tolerates typos).', fr:'Aucun résultat. Essayez moins de mots ou vérifiez l’orthographe (la recherche tolère les fautes).', it:'Nessun risultato. Prova con meno parole o controlla l’ortografia (la ricerca tollera errori).', pt:'Sem resultados. Tente menos palavras ou revise a ortografia (a busca tolera erros).'},
+  loadCatalog:  {es:'Cargando catálogo…',           en:'Loading catalog…',               fr:'Chargement du catalogue…',     it:'Caricamento del catalogo…',    pt:'Carregando catálogo…'},
+  loadSong:     {es:'Cargando cifrado…',            en:'Loading chord chart…',           fr:'Chargement de la grille…',     it:'Caricamento accordi…',         pt:'Carregando cifra…'},
+  loadArtist:   {es:'Cargando artista…',            en:'Loading artist…',                fr:'Chargement de l’artiste…',it:'Caricamento artista…',         pt:'Carregando artista…'},
+  errCatalog:   {es:'No se pudo cargar el catálogo.', en:'Could not load the catalog.', fr:'Impossible de charger le catalogue.', it:'Impossibile caricare il catalogo.', pt:'Não foi possível carregar o catálogo.'},
+  errSong:      {es:'No se pudo cargar la canción.', en:'Could not load the song.',     fr:'Impossible de charger la chanson.', it:'Impossibile caricare la canzone.', pt:'Não foi possível carregar a canção.'},
+  errArtist:    {es:'No se pudo cargar el artista.', en:'Could not load the artist.',  fr:'Impossible de charger l’artiste.', it:'Impossibile caricare l’artista.', pt:'Não foi possível carregar o artista.'},
+  songNotFound: {es:'Canción no encontrada.',       en:'Song not found.',                fr:'Chanson introuvable.',         it:'Canzone non trovata.',         pt:'Canção não encontrada.'},
+  songsCount:   {es:'{n} canciones',                en:'{n} songs',                      fr:'{n} chansons',                 it:'{n} canzoni',                  pt:'{n} canções'},
+  songCount1:   {es:'1 canción',                    en:'1 song',                         fr:'1 chanson',                    it:'1 canzone',                    pt:'1 canção'},
+  transposeDown:{es:'Bajar medio tono',             en:'Lower a semitone',               fr:'Baisser d’un demi-ton',   it:'Abbassa di un semitono',       pt:'Baixar meio tom'},
+  transposeUp:  {es:'Subir medio tono',             en:'Raise a semitone',               fr:'Monter d’un demi-ton',    it:'Alza di un semitono',          pt:'Subir meio tom'},
+  original:     {es:'Original',                     en:'Original',                       fr:'Original',                     it:'Originale',                    pt:'Original'},
+  flatSharp:    {es:'Usar bemoles/sostenidos',      en:'Toggle flats/sharps',            fr:'Bémols/dièses',                it:'Bemolli/diesis',               pt:'Bemóis/sustenidos'},
+  close:        {es:'Cerrar',                       en:'Close',                          fr:'Fermer',                       it:'Chiudi',                       pt:'Fechar'},
+  showMore:     {es:'Ver más',                      en:'Show more',                      fr:'Voir plus',                    it:'Mostra altro',                 pt:'Ver mais'},
+  'cta.eyebrow':{es:'Más con la app',                en:'Get more with the app',          fr:'Plus avec l’app',         it:'Di più con l’app',        pt:'Mais com o app'},
+  'cta.title':  {es:'Escucha los acordes en tiempo real', en:'Hear the chords in real time', fr:'Écoutez les accords en temps réel', it:'Ascolta gli accordi in tempo reale', pt:'Ouça os acordes em tempo real'},
+  'cta.desc':   {es:'Prueba More Than Modes en tu móvil: toca cualquier acorde del cifrado y escúchalo al instante. Incluye armonía, escalas y herramientas de práctica integradas, sin anuncios y offline.', en:'Try More Than Modes on your phone: tap any chord in the chart and hear it instantly. Comes with harmony, scales and integrated practice tools, ad-free and offline.', fr:'Essayez More Than Modes sur votre mobile : touchez n’importe quel accord et écoutez-le instantanément. Avec harmonie, gammes et outils de pratique intégrés, sans pub et hors ligne.', it:'Prova More Than Modes sul telefono: tocca qualsiasi accordo e ascoltalo all’istante. Con armonia, scale e strumenti di pratica integrati, senza pubblicità e offline.', pt:'Experimente More Than Modes no celular: toque qualquer acorde da cifra e ouça na hora. Com harmonia, escalas e ferramentas de prática integradas, sem anúncios e offline.'},
+  'cta.btn':    {es:'Descargar en Google Play',      en:'Get it on Google Play',          fr:'Télécharger sur Google Play',  it:'Scarica su Google Play',       pt:'Baixar no Google Play'},
+};
+const currentLang = () => (window.MTM_LANG || localStorage.getItem('mtm-lang') || 'es');
+function t(key, vars){
+  const r = I18N[key]; if (!r) return key;
+  let s = r[currentLang()] || r.en || r.es || key;
+  if (vars) for (const k in vars) s = s.replaceAll('{'+k+'}', vars[k]);
+  return s;
+}
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n-mtm]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n-mtm')); });
+  document.querySelectorAll('[data-i18n-mtm-attr]').forEach(el => {
+    for (const pair of el.getAttribute('data-i18n-mtm-attr').split(',')){
+      const [attr, key] = pair.split('|'); el.setAttribute(attr, t(key));
+    }
+  });
+}
+let CATALOG_READY = false;
+function rerenderDynamicI18n(){
+  applyStaticI18n();
+  if (!CATALOG_READY) return;
+  renderLetterBar();
+  if ($('q').value.trim()) searchFor($('q').value);
+  else showTopSuggestions();
+}
+
+/* ---------- utilidades ---------- */
+const norm = (s) => (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const $ = (id) => document.getElementById(id);
+
+function debounce(fn, ms){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+/* Distancia de Levenshtein limitada (early-exit) */
+function lev(a, b, max){
+  if (Math.abs(a.length-b.length) > max) return max+1;
+  const m=a.length, n=b.length;
+  if (!m) return n; if (!n) return m;
+  let prev = new Array(n+1), curr = new Array(n+1);
+  for (let j=0;j<=n;j++) prev[j]=j;
+  for (let i=1;i<=m;i++){
+    curr[0]=i; let rowMin=i;
+    for (let j=1;j<=n;j++){
+      const cost = a.charCodeAt(i-1)===b.charCodeAt(j-1) ? 0 : 1;
+      curr[j] = Math.min(curr[j-1]+1, prev[j]+1, prev[j-1]+cost);
+      if (curr[j]<rowMin) rowMin=curr[j];
+    }
+    if (rowMin>max) return max+1;
+    [prev,curr] = [curr,prev];
+  }
+  return prev[n];
+}
+
+/* ---------- estado ---------- */
+let INDEX = [];          // [{a, s, k, na, ns}]  na/ns = normalizados
+let META = {};
+let visibleResults = [];
+let visibleCount = PAGE_SIZE;
+let currentArtistCache = new Map();
+let ARTIST_COUNT = {};    // slug -> # canciones
+let ARTIST_NAMES = {};    // slug -> nombre legible
+let ARTIST_NORM  = {};    // slug -> nombre normalizado (cache para búsqueda)
+let ARTIST_SLUGS = [];    // lista de slugs (cache para iterar)
+let TOP_ARTISTS = [];     // slugs ordenados por count desc
+
+/* ---------- carga del índice ---------- */
+async function loadIndex(){
+  $('results').innerHTML = `<div class="loading">${escapeHtml(t('loadCatalog'))}</div>`;
+  try {
+    const [idx, meta] = await Promise.all([
+      fetch(DATA_BASE + '/index.json').then(r => r.json()),
+      fetch(DATA_BASE + '/meta.json').then(r => r.json()).catch(()=>({}))
+    ]);
+    INDEX = idx;
+    META = meta;
+    for (const it of INDEX){
+      it.na = norm(it.a);
+      it.ns = norm(it.s);
+      const sl = it.k.split('/')[0];
+      ARTIST_COUNT[sl] = (ARTIST_COUNT[sl]||0) + 1;
+      if (!ARTIST_NAMES[sl]){
+        ARTIST_NAMES[sl] = it.a;
+        ARTIST_NORM[sl] = it.na;
+      }
+    }
+    ARTIST_SLUGS = Object.keys(ARTIST_COUNT);
+    TOP_ARTISTS = ARTIST_SLUGS.slice().sort((a,b) => ARTIST_COUNT[b]-ARTIST_COUNT[a]);
+    renderLetterBar();
+    showTopSuggestions();
+  } catch (err) {
+    $('results').innerHTML = `<div class="empty">${escapeHtml(t('errCatalog'))} <code>${DATA_BASE}/index.json</code></div>`;
+    console.error(err);
+  }
+}
+
+/* ---------- letras ---------- */
+function renderLetterBar(){
+  const letters = 'abcdefghijklmnopqrstuvwxyz0'.split('');
+  const bar = $('letterBar');
+  bar.innerHTML = `<span class="toolbar-label">${escapeHtml(t('byLetter'))}</span>`;
+  const all = document.createElement('button'); all.className='chip active'; all.textContent=t('all'); all.dataset.l='*';
+  all.onclick = () => { selectLetter('*'); };
+  bar.appendChild(all);
+  for (const l of letters){
+    const b = document.createElement('button');
+    b.className='chip'; b.textContent = l==='0' ? '0-9' : l.toUpperCase(); b.dataset.l=l;
+    b.onclick = () => selectLetter(l);
+    bar.appendChild(b);
+  }
+}
+function selectLetter(l){
+  document.querySelectorAll('#letterBar .chip').forEach(c=>c.classList.toggle('active', c.dataset.l===l));
+  const vh = $('viewerHost');
+  if (vh.innerHTML){ vh.innerHTML = ''; history.replaceState(null,'',location.pathname); }
+  if (l==='*'){ showTopSuggestions(); return; }
+  const subset = INDEX.filter(it => {
+    const ch = it.na[0] || '';
+    if (l === '0') return /\d/.test(ch);
+    return ch === l;
+  });
+  $('resultsTitle').style.display = '';
+  $('resultsTitle').textContent = t('letterTitle', {l: (l==='0'?'0-9':l.toUpperCase()), n: subset.length.toLocaleString(currentLang())});
+  visibleResults = subset;
+  visibleCount = PAGE_SIZE;
+  renderResults();
+}
+function showTopSuggestions(){
+  $('resultsTitle').style.display = '';
+  $('resultsTitle').textContent = t('topArtists');
+  // Top 60 artistas, mostramos solo el nombre (no canción concreta)
+  const slugs = TOP_ARTISTS.slice(0, 60);
+  visibleResults = slugs.map(slug => ({ artistSlug: slug }));
+  visibleCount = visibleResults.length;
+  renderResults();
+}
+
+// Devuelve nombre legible de un artista a partir de su slug (cache O(1))
+function artistDisplay(slug){
+  return ARTIST_NAMES[slug] || slug.replace(/_/g,' ');
+}
+
+/* ---------- búsqueda ---------- */
+function searchFor(q){
+  const nq = norm(q).trim();
+  if (!nq){ showTopSuggestions(); return; }
+  const tokens = nq.split(/\s+/).filter(Boolean);
+  const maxEdit = nq.length <= 4 ? 1 : (nq.length <= 8 ? 2 : 3);
+
+  // --- matches por ARTISTA (a partir de cache) ---
+  const artistScored = [];
+  for (const slug of ARTIST_SLUGS){
+    const nn = ARTIST_NORM[slug];
+    let score = 0;
+    if (nn === nq) score += 500;
+    else if (nn.startsWith(nq)) score += 320;
+    else if (nn.indexOf(nq) >= 0) score += 220;
+    let tokHits = 0;
+    for (const t of tokens){ if (nn.indexOf(t) >= 0) tokHits++; }
+    if (tokens.length > 1 && tokHits === tokens.length) score += 200;
+    else score += tokHits * 50;
+    if (score === 0){
+      const words = nn.split(/[\s,]+/);
+      let best = maxEdit + 1;
+      for (const w of words){
+        if (!w || Math.abs(w.length - nq.length) > maxEdit) continue;
+        const d = lev(nq, w, maxEdit);
+        if (d < best) best = d;
+      }
+      if (best <= maxEdit) score = 30 - best*5;
+    }
+    if (score > 0){
+      const pop = Math.log2(1 + (ARTIST_COUNT[slug]||0));
+      artistScored.push([score + pop*2, slug]);
+    }
+  }
+  artistScored.sort((a,b) => b[0]-a[0]);
+
+  // --- matches por CANCIÓN ---
+  const scored = [];
+  for (const it of INDEX){
+    let score = 0;
+    // --- artista (peso fuerte) ---
+    if (it.na === nq) score += 400;
+    else if (it.na.startsWith(nq)) score += 250;
+    else if (it.na.indexOf(nq) >= 0) score += 180;
+    // --- canción ---
+    if (it.ns === nq) score += 200;
+    else if (it.ns.startsWith(nq)) score += 120;
+    else if (it.ns.indexOf(nq) >= 0) score += 80;
+    // --- tokens individuales en cualquier orden ---
+    let artistTokenHits = 0, songTokenHits = 0;
+    for (const t of tokens){
+      if (it.na.indexOf(t) >= 0) artistTokenHits++;
+      else if (it.ns.indexOf(t) >= 0) songTokenHits++;
+    }
+    if (artistTokenHits === tokens.length) score += 150;   // todos los tokens en artista
+    else if (artistTokenHits + songTokenHits === tokens.length) score += 90; // distribuidos
+    else { score += artistTokenHits*40 + songTokenHits*20; }
+    // --- fuzzy si seguimos en cero ---
+    if (score === 0){
+      const words = (it.na + ' ' + it.ns).split(/[\s,]+/);
+      let best = maxEdit + 1;
+      for (const w of words){
+        if (!w || Math.abs(w.length - nq.length) > maxEdit) continue;
+        const d = lev(nq, w, maxEdit);
+        if (d < best) best = d;
+      }
+      if (best <= maxEdit) score = 15 - best*3;
+    }
+    if (score > 0){
+      // popularidad como desempate (log para no aplastar el ranking)
+      const sl = it.k.split('/')[0];
+      const pop = Math.log2(1 + (ARTIST_COUNT[sl]||0));
+      scored.push([score + pop, it]);
+    }
+  }
+  scored.sort((a,b) => b[0]-a[0]);
+  const songResults = scored.map(s=>s[1]);
+  const artistResults = artistScored.slice(0, 12).map(s => ({ artistSlug: s[1], _group: 'artist' }));
+  const seenArtistSlugs = new Set(artistResults.map(a => a.artistSlug));
+  visibleResults = [];
+  if (artistResults.length){
+    visibleResults.push({ _heading: t('sectionArtists', {n: artistResults.length}) });
+    visibleResults.push(...artistResults);
+  }
+  if (songResults.length){
+    visibleResults.push({ _heading: t('sectionSongs', {n: songResults.length.toLocaleString(currentLang())}) });
+    visibleResults.push(...songResults);
+  }
+  visibleCount = PAGE_SIZE + (artistResults.length ? artistResults.length + 2 : 0);
+  $('resultsTitle').style.display = 'none';
+  if (!artistResults.length && !songResults.length){
+    visibleResults = [];
+  }
+  renderResults();
+}
+
+/* ---------- render ---------- */
+function renderResults(){
+  const list = visibleResults.slice(0, visibleCount);
+  if (!list.length){
+    $('results').innerHTML = `<div class="empty">${escapeHtml(t('noResults'))}</div>`;
+    $('showMore').style.display = 'none';
+    return;
+  }
+  const cardHtml = (it) => {
+    if (it.artistSlug){
+      const name = artistDisplay(it.artistSlug);
+      const c = ARTIST_COUNT[it.artistSlug] || 0;
+      return `<a class="artist-card" data-artist="${encodeURIComponent(it.artistSlug)}">
+        <div class="artist-card-count">${escapeHtml(c===1 ? t('songCount1') : t('songsCount',{n:c}))}</div>
+        <div class="artist-card-name">${escapeHtml(name)}</div>
+      </a>`;
+    }
+    return `<a class="result-card" data-k="${encodeURIComponent(it.k)}">
+      <div class="result-artist">${escapeHtml(it.a)}</div>
+      <div class="result-song">${escapeHtml(it.s)}</div>
+    </a>`;
+  };
+  // Agrupa segun _heading; si no hay headings, una sola grid
+  const out = [];
+  let buf = [];
+  const flush = () => { if (buf.length){ out.push(`<div class="results">${buf.join('')}</div>`); buf = []; } };
+  for (const it of list){
+    if (it._heading){
+      flush();
+      out.push(`<div class="sugg-section-head"><h3 class="section-title">${escapeHtml(it._heading)}</h3><span class="sep"></span></div>`);
+    } else buf.push(cardHtml(it));
+  }
+  flush();
+  $('results').innerHTML = out.join('');
+  $('showMore').style.display = visibleCount < visibleResults.length ? 'block' : 'none';
+  document.querySelectorAll('#results .result-card').forEach(el => {
+    el.addEventListener('click', (e) => { e.preventDefault(); openSong(decodeURIComponent(el.dataset.k)); });
+  });
+  document.querySelectorAll('#results .artist-card').forEach(el => {
+    el.addEventListener('click', (e) => { e.preventDefault(); openArtist(decodeURIComponent(el.dataset.artist)); });
+  });
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- visor ---------- */
+async function loadArtist(slug){
+  if (currentArtistCache.has(slug)) return currentArtistCache.get(slug);
+  const r = await fetch(`${DATA_BASE}/a/${encodeURIComponent(slug)}.json`);
+  if (!r.ok) throw new Error('Artista no encontrado');
+  const data = await r.json();
+  currentArtistCache.set(slug, data);
+  return data;
+}
+
+async function openArtist(slug){
+  const host = $('viewerHost');
+  host.innerHTML = `<div class="viewer open"><div class="loading">${escapeHtml(t('loadArtist'))}</div></div>`;
+  host.scrollIntoView({behavior:'smooth', block:'start'});
+  let artist;
+  try { artist = await loadArtist(slug); }
+  catch(e){ host.innerHTML = `<div class="viewer open"><div class="empty">${escapeHtml(t('errArtist'))}</div></div>`; return; }
+  const entries = Object.entries(artist.songs).sort((a,b) => a[1].t.localeCompare(b[1].t, currentLang()));
+  history.replaceState(null, '', '?artist=' + encodeURIComponent(slug));
+  host.innerHTML = `
+    <div class="viewer open">
+      <div class="viewer-head">
+        <div>
+          <div class="viewer-title">${escapeHtml(artist.n)}</div>
+          <div class="viewer-artist">${escapeHtml(entries.length===1 ? t('songCount1') : t('songsCount',{n:entries.length}))}</div>
+        </div>
+        <div class="viewer-actions">
+          <button type="button" class="viewer-close">${escapeHtml(t('close'))}</button>
+        </div>
+      </div>
+      <ol class="song-list">
+        ${entries.map(([sl, sd]) => `<li><a class="song-list-item" data-k="${encodeURIComponent(slug+'/'+sl)}">
+          <span class="song-list-title">${escapeHtml(sd.t)}</span>
+          <svg class="song-list-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </a></li>`).join('')}
+      </ol>
+    </div>`;
+  host.querySelector('.viewer-close').onclick = () => { host.innerHTML=''; history.replaceState(null,'',location.pathname); };
+  host.querySelectorAll('.song-list-item').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); openSong(decodeURIComponent(el.dataset.k)); });
+  });
+}
+
+async function openSong(k){
+  const [artistSlug, songSlug] = k.split('/');
+  const host = $('viewerHost');
+  host.innerHTML = `<div class="viewer open"><div class="loading">${escapeHtml(t('loadSong'))}</div></div>`;
+  host.scrollIntoView({behavior:'smooth', block:'start'});
+  let artist;
+  try { artist = await loadArtist(artistSlug); }
+  catch(e){ host.innerHTML = `<div class="viewer open"><div class="empty">${escapeHtml(t('errSong'))}</div></div>`; return; }
+  const song = artist.songs[songSlug];
+  if (!song){ host.innerHTML = `<div class="viewer open"><div class="empty">${escapeHtml(t('songNotFound'))}</div></div>`; return; }
+
+  history.replaceState(null, '', '?song=' + encodeURIComponent(k));
+
+  let transpose = 0;
+  let useFlats = false;
+  const render = () => {
+    const body = transposeText(song.b, transpose, useFlats);
+    host.querySelector('.cifrado').innerHTML = renderCifrado(body);
+    host.querySelector('.t-value').textContent = (transpose>=0?'+':'') + transpose + ' st';
+  };
+
+  const otherSongs = Object.entries(artist.songs).filter(([s])=>s!==songSlug).slice(0,8);
+  const noteIcon = '<svg class="sugg-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg>';
+  const suggHtml = otherSongs.length ? `
+    <div class="suggestions">
+      <div class="sugg-section-head"><h3 class="section-title">${escapeHtml(t('moreOf',{name:artist.n}))}</h3><span class="sep"></span></div>
+      <div class="sugg-grid">
+        ${otherSongs.map(([sl, sd], i) => `<a class="sugg-card" data-k="${encodeURIComponent(artistSlug+'/'+sl)}">
+          <span class="sugg-num">${String(i+1).padStart(2,'0')}</span>
+          ${noteIcon}
+          <div class="sugg-body">
+            <div class="sugg-artist">${escapeHtml(artist.n)}</div>
+            <div class="sugg-song">${escapeHtml(sd.t)}</div>
+          </div>
+        </a>`).join('')}
+      </div>
+    </div>` : '';
+
+  host.innerHTML = `
+    <div class="viewer open">
+      <div class="viewer-head">
+        <div>
+          <div class="viewer-title">${escapeHtml(song.t)}</div>
+          <div class="viewer-artist">${escapeHtml(artist.n)}</div>
+        </div>
+        <div class="viewer-actions">
+          <div class="transpose" role="group" aria-label="Transportador">
+            <button type="button" class="t-down" aria-label="${escapeHtml(t('transposeDown'))}">−</button>
+            <span class="t-value">0 st</span>
+            <button type="button" class="t-up" aria-label="${escapeHtml(t('transposeUp'))}">+</button>
+            <button type="button" class="t-reset">${escapeHtml(t('original'))}</button>
+            <button type="button" class="t-flat" title="${escapeHtml(t('flatSharp'))}">♯/♭</button>
+          </div>
+          <button type="button" class="viewer-close">${escapeHtml(t('close'))}</button>
+        </div>
+      </div>
+      <pre class="cifrado"></pre>
+      ${suggHtml}
+    </div>`;
+  render();
+  host.querySelector('.t-up').onclick = () => { transpose = clampSemis(transpose+1); render(); };
+  host.querySelector('.t-down').onclick = () => { transpose = clampSemis(transpose-1); render(); };
+  host.querySelector('.t-reset').onclick = () => { transpose = 0; render(); };
+  host.querySelector('.t-flat').onclick = () => { useFlats = !useFlats; render(); };
+  host.querySelector('.viewer-close').onclick = () => { host.innerHTML=''; history.replaceState(null,'',location.pathname); };
+  host.querySelectorAll('.sugg-card').forEach(el => {
+    el.addEventListener('click', e => { e.preventDefault(); openSong(decodeURIComponent(el.dataset.k)); });
+  });
+}
+
+function clampSemis(next){ if (next>11) return 11; if (next<-11) return -11; return next; }
+
+/* ---------- transposición ---------- */
+const NOTES_SHARP = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const NOTES_FLAT  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const NOTE_INDEX = {C:0,'C#':1,Db:1,D:2,'D#':3,Eb:3,E:4,F:5,'F#':6,Gb:6,G:7,'G#':8,Ab:8,A:9,'A#':10,Bb:10,B:11};
+const CHORD_RE = /^([A-G])([#b]?)((?:maj|min|m|dim|aug|sus|add|°|ø|Δ|\+|\-)*\d*(?:\([^)]*\))*)(?:\/([A-G])([#b]?))?$/;
+
+function transposeChord(token, semis, flats){
+  const m = token.match(CHORD_RE);
+  if (!m) return token;
+  const [, root, acc, suffix, bassRoot, bassAcc] = m;
+  const key = root + acc;
+  if (!(key in NOTE_INDEX)) return token;
+  const ni = (NOTE_INDEX[key] + semis + 1200) % 12;
+  const newRoot = (flats ? NOTES_FLAT : NOTES_SHARP)[ni];
+  let out = newRoot + suffix;
+  if (bassRoot){
+    const bk = bassRoot + bassAcc;
+    if (bk in NOTE_INDEX){
+      const bi = (NOTE_INDEX[bk] + semis + 1200) % 12;
+      out += '/' + (flats ? NOTES_FLAT : NOTES_SHARP)[bi];
+    }
+  }
+  return out;
+}
+
+function isChordLine(line){
+  const tokens = line.trim().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return false;
+  let chords = 0;
+  for (const t of tokens){
+    const cleaned = t.replace(/^[*|\-]+|[*|\-]+$/g,'');
+    if (CHORD_RE.test(cleaned)) chords++;
+  }
+  return chords / tokens.length >= 0.7;
+}
+
+function transposeText(text, semis, flats){
+  if (semis === 0 && !flats) return text;
+  return text.split('\n').map(line => {
+    if (!isChordLine(line)) return line;
+    // preservar espacios; reemplazar tokens uno por uno usando regex con grupos de espacios
+    return line.replace(/(\S+)/g, (m) => {
+      const lead = m.match(/^[*|\-]+/)?.[0] || '';
+      const tail = m.match(/[*|\-]+$/)?.[0] || '';
+      const core = m.slice(lead.length, m.length - tail.length);
+      const replaced = transposeChord(core, semis, flats);
+      return lead + replaced + tail;
+    });
+  }).join('\n');
+}
+
+function renderCifrado(text){
+  return text.split('\n').map(line => {
+    const safe = escapeHtml(line);
+    return isChordLine(line) ? `<span class="chord-line">${safe}</span>` : safe;
+  }).join('\n');
+}
+
+/* ---------- bindings ---------- */
+const onSearch = () => searchFor($('q').value);
+const onExplicitSearch = () => {
+  // Enter o lupa: cerrar el visor y dar prioridad a los resultados
+  const vh = $('viewerHost');
+  if (vh.innerHTML){ vh.innerHTML = ''; history.replaceState(null,'',location.pathname); }
+  onSearch();
+  document.getElementById('resultsSection').scrollIntoView({behavior:'smooth', block:'start'});
+};
+$('searchBtn').addEventListener('click', onExplicitSearch);
+$('q').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); onExplicitSearch(); } });
+$('q').addEventListener('input', debounce(onSearch, 220));
+$('showMore').addEventListener('click', () => { visibleCount += PAGE_SIZE; renderResults(); });
+
+/* ---------- init ---------- */
+applyStaticI18n();
+// Hook al cambio de idioma global
+if (typeof window.mtmSetLanguage === 'function'){
+  const _origSet = window.mtmSetLanguage;
+  window.mtmSetLanguage = function(lang){
+    _origSet(lang);
+    if (window.MTM_LANG !== lang) window.MTM_LANG = lang;
+    rerenderDynamicI18n();
+  };
+}
+loadIndex().then(() => {
+  CATALOG_READY = true;
+  applyStaticI18n();
+  const u = new URLSearchParams(location.search);
+  if (u.get('song')) openSong(u.get('song'));
+  else if (u.get('artist')) openArtist(u.get('artist'));
+});
+</script>
+</body>
+</html>

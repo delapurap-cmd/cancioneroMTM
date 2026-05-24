@@ -1,0 +1,51 @@
+name: Deploy Cancionero to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Stage static site (only index.html + needed assets)
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+
+      - name: Extract cancionero zip
+        run: |
+          mkdir -p /tmp/cancionero_raw
+          unzip -q assets/repertoire/cancionero_esp.zip -d /tmp/cancionero_raw/
+
+      - name: Build cancionero JSON shards
+        run: |
+          mkdir -p _site/cancionero-data
+          python3 scripts/build_cancionero.py /tmp/cancionero_raw/cancionero_esp _site/cancionero-data
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
